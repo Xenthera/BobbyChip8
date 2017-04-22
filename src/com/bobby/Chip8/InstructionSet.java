@@ -21,10 +21,7 @@ public class InstructionSet {
     Clear the display.
      */
     void ClearScreen() {
-        for (int i = 0; i < this.cpu.gfx.length; i++) {
-            this.cpu.gfx[i] = 0;
-        }
-        this.gfx.drawFlag = true;
+        chip8.graphics.clearScreen();
         this.cpu.pc += 2;
     }
 
@@ -266,16 +263,16 @@ public class InstructionSet {
             for (int xline = 0; xline < 8; xline++) {
                 if ((pixel & (0x80 >> xline)) != 0) {
                     if ((x + xline + ((y + yline) * 64)) < 2048) {
-                        if (this.cpu.gfx[(x + xline + ((y + yline) * 64))] == 1) {
+                        if (this.chip8.graphics.gfx[(x + xline + ((y + yline) * 64))] == 1) {
                             this.cpu.V[0xF] = 1;
                         }
-                        this.cpu.gfx[x + xline + ((y + yline) * 64)] ^= 1;
+                        this.chip8.graphics.gfx[x + xline + ((y + yline) * 64)] ^= 1;
 
                     }
                 }
             }
         }
-        this.cpu.drawFlag = true;
+        this.chip8.graphics.drawFlag = true;
         this.cpu.pc += 2;
     }
 

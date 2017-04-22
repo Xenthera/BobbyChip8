@@ -6,9 +6,19 @@ package com.bobby.Chip8;
 public class Memory {
 
     private int[] data;
+    private int size;
 
     public Memory(int size) {
         this.data = new int[size];
+        this.size = size;
+    }
+
+    public String hex(int number) {
+        return "0x" + Integer.toHexString(number);
+    }
+
+    public void initialize() {
+        this.data = new int[this.size];
     }
 
     public void writeIntArray(int[] data, int startAddress) {
@@ -21,6 +31,8 @@ public class Memory {
         for (int i = 0; i < data.length; i++) {
             this.data[startAddress + i] = data[i] & 0xFF;
         }
+
+
     }
 
     public int read(int address) {

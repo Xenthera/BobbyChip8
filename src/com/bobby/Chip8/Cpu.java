@@ -9,7 +9,7 @@ import java.security.InvalidParameterException;
 public class Cpu {
     public Chip8 chip8;
     public int opcode;
-    public boolean idle;
+    public boolean idle = false;
     //15 general purpose registers, 16th used for carry flag
     public int V[];
     //index register
@@ -23,11 +23,19 @@ public class Cpu {
     public short registerToWriteKey;
     private InstructionSet instructionSet;
 
+
     public Cpu(Chip8 chip8) {
         this.V = new int[16];
         this.stack = new int[16];
         this.chip8 = chip8;
         instructionSet = new InstructionSet(this, chip8);
+    }
+
+    public void intialize() {
+        this.sp = 0;
+        this.V = new int[16];
+        this.stack = new int[16];
+        this.pc = 0x200;
     }
 
     public void emulateCycle() {
@@ -60,8 +68,13 @@ public class Cpu {
         this.idle = idle;
     }
 
+    public String hex(int number) {
+        return "0x" + Integer.toHexString(number);
+    }
+
     public void decodeOpcode(int opcode) throws InvalidParameterException {
         //System.out.println("0x"+Integer.toHexString(opcode));
+
         this.opcode = opcode;
         switch (opcode & 0xF000) {
             case 0x0000: {
@@ -225,7 +238,8 @@ public class Cpu {
                     }
 
                     default: {
-
+                        System.out.println("Unknown Opcode: " + hex(opcode));
+                        break;
                     }
                 }
                 break;
