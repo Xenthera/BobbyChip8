@@ -22,7 +22,7 @@ public class Chip8 {
     //35 opcodes
     public int opcode;
     //4k memory
-    public int memory[];
+    public Memory ram;
     //15 general purpose registers, 16th used for carry flag
     public int V[];
     //index register
@@ -53,7 +53,7 @@ public class Chip8 {
 
     public short registerToWriteKey;
 
-    public char[] fontSet = { 0xF0, 0x90, 0x90, 0x90, 0xF0,
+    public int[] fontSet = {0xF0, 0x90, 0x90, 0x90, 0xF0,
             0x20, 0x60, 0x20, 0x20, 0x70,
             0xF0, 0x10, 0xF0, 0x80, 0xF0,
             0xF0, 0x10, 0xF0, 0x10, 0xF0,
@@ -75,7 +75,7 @@ public class Chip8 {
     boolean tone = false;
 
     public Chip8(){
-        this.memory = new int[4096];
+        this.ram = new Memory(4096);
         this.V = new int[16];
         this.gfx = new int[64 * 32];
         this.stack = new int[16];
@@ -95,33 +95,18 @@ public class Chip8 {
     }
 
     public void loadProgram(String path){
-        try {
-            InputStream is = new FileInputStream(new File(path));
-            byte[] data = IOUtils.toByteArray(is);
-
-            for (int i = 0; i < data.length; i++) {
-                this.memory[0x200 + i] = data[i] & 0xFF;
-            }
-            is.close();
-
-        }catch (Exception e){
-            System.out.println("Unable to load program: " + e.getMessage());
-        }
-
+        this.loadProgram(new File(path));
     }
 
     public void loadProgram(File file){
         try {
             InputStream is = new FileInputStream(file);
             byte[] data = IOUtils.toByteArray(is);
-
-            for (int i = 0; i < data.length; i++) {
-                this.memory[0x200 + i] = data[i] & 0xFF;
-            }
+            this.ram.writeByteArray(data, 0x200);
             is.close();
-
         }catch (Exception e){
             System.out.println("Unable to load program: " + e.getMessage());
+            System.exit(0);
         }
 
     }
@@ -138,9 +123,7 @@ public class Chip8 {
         this.stack = new int[16];
 
 
-        for (int i = 0; i < 80; i++) {
-            this.memory[i] = fontSet[i];
-        }
+        this.ram.writeIntArray(fontSet, 0);
     }
 
     public void setIdle(boolean idle){
@@ -152,7 +135,7 @@ public class Chip8 {
     public void emulateCycle(){
 
         this.pc = this.pc & 0xFFFF;
-        int opcode = this.memory[this.pc] << 8 | this.memory[this.pc + 1];
+        int opcode = this.ram.read(this.pc) << 8 | this.ram.read(this.pc + 1);
         if(this.idle){
             for (int i = 0; i < keys.length; i++) {
                 if(keys[i] == 1){
@@ -401,7 +384,8 @@ public class Chip8 {
                 V[0xF] = 0;
                 for (int yline = 0; yline < height; yline++)
                 {
-                    pixel = this.memory[this.I + yline];
+
+                    pixel = this.ram.read(this.I + yline);
                     for (int xline = 0; xline < 8; xline++)
                     {
                         if ((pixel & (0x80 >> xline)) != 0)
@@ -480,10 +464,9 @@ public class Chip8 {
 
 
                     case 0x0033: {
-
-                        this.memory[this.I]     = this.V[(opcode & 0x0F00) >> 8] / 100;
-                        this.memory[this.I + 1] = (this.V[(opcode & 0x0F00) >> 8] / 10) % 10;
-                        this.memory[this.I + 2] = (this.V[(opcode & 0x0F00) >> 8] % 100) % 10;
+                        this.ram.write(this.V[(opcode & 0x0F00) >> 8] / 100, this.I);
+                        this.ram.write((this.V[(opcode & 0x0F00) >> 8] / 10) % 10, this.I + 1);
+                        this.ram.write((this.V[(opcode & 0x0F00) >> 8] % 100) % 10, this.I + 2);
                         this.pc += 2;
                         break;
                     }
@@ -498,7 +481,7 @@ public class Chip8 {
                     case 0x0055: {
                         int numRegisters = (opcode & 0x0F00) >> 8;
                         for (int i = 0; i < numRegisters; i++) {
-                            this.memory[this.I + i] = this.V[i];
+                            this.ram.write(this.V[i], this.I + i);
                         }
                         //I += ((opcode & 0x0F00) >> 8) + 1;
                         this.pc += 2;
@@ -507,7 +490,8 @@ public class Chip8 {
                     case 0x0065: {
                         int numRegister = (opcode & 0x0F00) >> 8;
                         for(int i = 0; i <= numRegister; i++){
-                            this.V[i] = this.memory[this.I + i];
+                            this.V[i] = this.ram.read(this.I + i);
+
                         }
                         I += ((opcode & 0x0F00) >> 8) + 1;
                         this.pc += 2;

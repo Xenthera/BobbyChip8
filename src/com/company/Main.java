@@ -169,13 +169,13 @@ public class Main extends PApplet{
                     text("Register " + String.valueOf(i) + ": " + chip8.hex(chip8.V[i]), 5, 15 + i * 10);
                 }
                 text("PC: " + chip8.hex(chip8.pc), 5, 200);
-                text("Cur inst: " + chip8.hex(chip8.memory[chip8.pc] << 8 | (chip8.memory[chip8.pc + 1])), 5, 250);
+            text("Cur inst: " + chip8.hex(chip8.ram.read(chip8.pc) << 8 | (chip8.ram.read(chip8.pc + 1))), 5, 250);
                 for (int i = 0; i < chip8.stack.length; i++) {
                     text("Stack " + String.valueOf(i) + ": " + chip8.hex(chip8.stack[i]), 100, 15 + i * 10);
                 }
                 text("I: " + chip8.hex(chip8.I), 5, 210);
                 text("Keys: " + Arrays.toString(chip8.keys), 5, 220);
-                text(d.getOpcodeDescription(chip8.memory[chip8.pc] << 8 | (chip8.memory[chip8.pc + 1])), 5, 230);
+            text(d.getOpcodeDescription(chip8.ram.read(chip8.pc) << 8 | (chip8.ram.read(chip8.pc + 1))), 5, 230);
                 text("Delay Timer: " + String.valueOf(chip8.delay_timer), 5, 240);
 
                 textAlign(CENTER);
