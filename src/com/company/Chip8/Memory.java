@@ -5,7 +5,9 @@ package com.company.Chip8;
  */
 public class Memory {
 
-    public Memory(){
-        System.out.println("Initializing Memory");
+    private int[] data;
+
+    public Memory(int size) {
+        this.data = new int[size];
     }
 }
