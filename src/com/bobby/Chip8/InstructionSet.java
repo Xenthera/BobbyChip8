@@ -142,6 +142,7 @@ public class InstructionSet {
     corresponding bits from two values, and if either bit is 1, then the same bit in the result is also 1.
     Otherwise, it is 0.
      */
+    //TODO: Finish the rest of the documentation of op-codes.
     void SetVxOrVy() {
         int Vx = (cpu.opcode & 0x0F00) >> 8;
         int Vy = (cpu.opcode & 0x00F0) >> 4;

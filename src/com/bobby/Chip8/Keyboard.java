@@ -5,7 +5,7 @@ package com.bobby.Chip8;
  */
 public class Keyboard {
 
-    private int keys[];
+    public int keys[];
 
     public Keyboard() {
         this.keys = new int[16];

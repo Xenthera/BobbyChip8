@@ -12,9 +12,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 
 
-/**
- * Created by bobbylucero on 3/26/17.
- */
 public class Chip8 {
     private final int INSTRUCTIONS_PER_FRAME = 10;
     public boolean verbose = false;
