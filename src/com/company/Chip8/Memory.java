@@ -6,6 +6,6 @@ package com.company.Chip8;
 public class Memory {
 
     public Memory(){
-
+        System.out.println("Initializing Memory");
     }
 }
