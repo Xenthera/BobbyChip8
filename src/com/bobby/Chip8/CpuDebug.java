@@ -1,5 +1,5 @@
 
-package com.company.Chip8;
+package com.bobby.Chip8;
 public class CpuDebug {
 
     /** Creates a new instance of CpuDebug */

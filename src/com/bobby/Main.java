@@ -1,7 +1,7 @@
-package com.company;
+package com.bobby;
 
-import com.company.Chip8.Chip8;
-import com.company.Chip8.CpuDebug;
+import com.bobby.Chip8.Chip8;
+import com.bobby.Chip8.CpuDebug;
 import processing.core.*;
 
 import javax.swing.*;
@@ -22,7 +22,7 @@ public class Main extends PApplet{
     PFont font;
 
     public static void main(String[] args) {
-        PApplet.main("com.company.Main");
+        PApplet.main("com.bobby.Main");
     }
 
     public void settings(){

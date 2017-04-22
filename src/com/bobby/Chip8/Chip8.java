@@ -1,15 +1,10 @@
-package com.company.Chip8;
+package com.bobby.Chip8;
 
 
 
 import org.apache.commons.io.IOUtils;
 
-import javax.swing.*;
 import java.io.*;
-import java.security.InvalidParameterException;
-
-import java.security.Key;
-import java.util.concurrent.ThreadLocalRandom;
 
 
 import javax.sound.midi.*;

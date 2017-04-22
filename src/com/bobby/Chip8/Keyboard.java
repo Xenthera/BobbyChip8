@@ -1,6 +1,4 @@
-package com.company.Chip8;
-
-import java.security.Key;
+package com.bobby.Chip8;
 
 /**
  * Created by Bobby on 4/22/2017.

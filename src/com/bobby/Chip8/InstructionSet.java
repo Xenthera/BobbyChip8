@@ -1,4 +1,4 @@
-package com.company.Chip8;
+package com.bobby.Chip8;
 
 import java.util.concurrent.ThreadLocalRandom;
 
