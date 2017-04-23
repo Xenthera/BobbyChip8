@@ -96,6 +96,7 @@ public class Chip8 {
     }
 
     public void update(){
+        System.out.println(keyboard.currentKeyPressed);
         this.tickTimers();
         this.tickCpu();
 

@@ -22,7 +22,7 @@ public class InstructionSet {
      */
     void ClearScreen() {
         chip8.graphics.clearScreen();
-        this.cpu.pc += 2;
+
     }
 
     /*
@@ -32,9 +32,10 @@ public class InstructionSet {
     the top of the stack, then subtracts 1 from the stack pointer.
      */
     void ReturnFromSubroutine() {
-        --this.cpu.sp;
-        this.cpu.pc = this.cpu.stack[this.cpu.sp];
-        this.cpu.stack[this.cpu.sp] = 0x0;
+        this.cpu.sp -= 1;
+        this.cpu.pc = chip8.ram.read(this.cpu.sp) << 8;
+        this.cpu.sp -= 1;
+        this.cpu.pc += chip8.ram.read(this.cpu.sp);
     }
 
     /*
@@ -53,9 +54,11 @@ public class InstructionSet {
     the current PC on the top of the stack. The PC is then set to nnn.
      */
     void CallSubroutine() {
-        this.cpu.stack[this.cpu.sp] = this.cpu.pc += 2;
-        this.cpu.sp++;
-        this.cpu.pc = cpu.opcode & 0x0FFF;
+        chip8.ram.write(cpu.pc & 0x00FF, cpu.sp);
+        cpu.sp += 1;
+        chip8.ram.write((cpu.pc & 0xFF00) >> 8, cpu.sp);
+        cpu.sp += 1;
+        cpu.pc = cpu.opcode & 0x0FFF;
     }
 
     /*
@@ -64,13 +67,11 @@ public class InstructionSet {
     The interpreter compares register Vx to kk, and if they are equal, increments the program counter by 2.
      */
     void SkipNextIfVxEqualKk() {
-        int Vx = (cpu.opcode & 0x0F00) >> 8;
-        int kk = cpu.opcode & 0x00FF;
-
-        if (this.cpu.V[Vx] == kk) {
+        int sourceRegister = (this.cpu.opcode & 0x0F00) >> 8;
+        if (this.cpu.V[sourceRegister] == (this.cpu.opcode & 0x00FF)) {
             this.cpu.pc += 2;
         }
-        this.cpu.pc += 2;
+
     }
 
     /*
@@ -84,7 +85,7 @@ public class InstructionSet {
         if (Vx != kk) {
             this.cpu.pc += 2;
         }
-        this.cpu.pc += 2;
+
     }
 
     /*
@@ -98,7 +99,7 @@ public class InstructionSet {
         if (Vx == Vy) {
             this.cpu.pc += 2;
         }
-        this.cpu.pc += 2;
+
     }
 
     /*
@@ -108,7 +109,7 @@ public class InstructionSet {
      */
     void SetVxEqualKk() {
         this.cpu.V[(cpu.opcode & 0x0F00) >> 8] = cpu.opcode & 0x00FF;
-        this.cpu.pc += 2;
+
     }
 
     /*
@@ -117,10 +118,10 @@ public class InstructionSet {
     Adds the value kk to the value of register Vx, then stores the result in Vx.
      */
     void SetVxAddKk() {
-        int V = (cpu.opcode & 0x0F00) >> 8;
-        int kk = cpu.opcode & 0x00FF;
-        this.cpu.V[V] = (this.cpu.V[V] + kk);
-        this.cpu.pc += 2;
+        int targetRegister = (cpu.opcode & 0x0F00) >> 8;
+        int temp = cpu.V[targetRegister] + (cpu.opcode & 0x00FF);
+        cpu.V[targetRegister] = (temp < 256) ? (short) temp : (short) (temp - 256);
+
     }
 
     /*
@@ -132,7 +133,7 @@ public class InstructionSet {
         int Vx = (cpu.opcode & 0x0F00) >> 8;
         int Vy = (cpu.opcode & 0x00F0) >> 4;
         this.cpu.V[Vx] = this.cpu.V[Vy];
-        this.cpu.pc += 2;
+
     }
 
     /*
@@ -147,21 +148,21 @@ public class InstructionSet {
         int Vx = (cpu.opcode & 0x0F00) >> 8;
         int Vy = (cpu.opcode & 0x00F0) >> 4;
         this.cpu.V[Vx] |= this.cpu.V[Vy];
-        this.cpu.pc += 2;
+
     }
 
     void SetVxAndVy() {
         int Vx = (cpu.opcode & 0x0F00) >> 8;
         int Vy = (cpu.opcode & 0x00F0) >> 4;
         this.cpu.V[Vx] &= this.cpu.V[Vy];
-        this.cpu.pc += 2;
+
     }
 
     void SetVxXorVy() {
         int Vx = (cpu.opcode & 0x0F00) >> 8;
         int Vy = (cpu.opcode & 0x00F0) >> 4;
         this.cpu.V[Vx] ^= this.cpu.V[Vy];
-        this.cpu.pc += 2;
+
     }
 
     void SetVxAddVy() {
@@ -174,20 +175,22 @@ public class InstructionSet {
             this.cpu.V[0xF] = 0;
         }
         this.cpu.V[Vx] = result & 0xFF;
-        this.cpu.pc += 2;
+
     }
 
-    void setVxSubVy() {
-        int Vx = (cpu.opcode & 0x0F00) >> 8;
-        int Vy = (cpu.opcode & 0x00F0) >> 4;
-        int result = this.cpu.V[Vx] - this.cpu.V[Vy];
-        if (this.cpu.V[Vx] > this.cpu.V[Vy]) {
-            this.cpu.V[0xF] = 1;
+    void SetVxSubVy() {
+        int targetRegister = (cpu.opcode & 0x0F00) >> 8;
+        int sourceRegister = (cpu.opcode & 0x00F0) >> 4;
+        int resultValue;
+        if (cpu.V[targetRegister] > cpu.V[sourceRegister]) {
+            resultValue = cpu.V[targetRegister] - cpu.V[sourceRegister];
+            cpu.V[0xF] = 1;
         } else {
-            this.cpu.V[0xF] = 0;
+            resultValue = 256 + cpu.V[targetRegister] - cpu.V[sourceRegister];
+            cpu.V[0xF] = 0;
         }
-        this.cpu.V[Vx] = result;
-        this.cpu.pc += 2;
+        cpu.V[targetRegister] = (short) resultValue;
+
     }
 
     void SetVxShiftRight() {
@@ -198,20 +201,22 @@ public class InstructionSet {
             this.cpu.V[0xF] = 0;
         }
         this.cpu.V[Vx] >>= 1;
-        this.cpu.pc += 2;
+
     }
 
     void SetVxVySubVx() {
-        int Vx = (cpu.opcode & 0x0F00) >> 8;
-        int Vy = (cpu.opcode & 0x00F0) >> 4;
-        int result = this.cpu.V[Vy] - this.cpu.V[Vx];
-        if (this.cpu.V[Vy] > this.cpu.V[Vx]) {
-            this.cpu.V[0xF] = 1;
+        int targetRegister = (cpu.opcode & 0x0F00) >> 8;
+        int sourceRegister = (cpu.opcode & 0x00F0) >> 4;
+        int resultValue;
+        if (cpu.V[sourceRegister] > cpu.V[targetRegister]) {
+            resultValue = cpu.V[sourceRegister] - cpu.V[targetRegister];
+            cpu.V[0xF] = 1;
         } else {
-            this.cpu.V[0xF] = 0;
+            resultValue = 256 + cpu.V[sourceRegister] - cpu.V[targetRegister];
+            cpu.V[0xF] = 0;
         }
-        this.cpu.V[Vx] = result;
-        this.cpu.pc += 2;
+        cpu.V[targetRegister] = (short) resultValue;
+
     }
 
     void SetVxShiftLeft() {
@@ -222,7 +227,7 @@ public class InstructionSet {
             this.cpu.V[0xF] = 0;
         }
         this.cpu.V[Vx] <<= 1;
-        this.cpu.pc += 2;
+
     }
 
     void SkipNextIfVxNotEqualVy() {
@@ -231,12 +236,12 @@ public class InstructionSet {
         if (this.cpu.V[Vx] != this.cpu.V[Vy]) {
             this.cpu.pc += 2;
         }
-        this.cpu.pc += 2;
+
     }
 
     void SetIEqualNNN() {
         this.cpu.I = cpu.opcode & 0x0FFF;
-        this.cpu.pc += 2;
+
     }
 
     void JumpToNnnPlusV0() {
@@ -248,7 +253,7 @@ public class InstructionSet {
         int Vx = (cpu.opcode & 0x0F00) >> 8;
         int kk = cpu.opcode & 0x00FF;
         this.cpu.V[Vx] = randByte & kk;
-        this.cpu.pc += 2;
+
     }
 
     void DrawSprite() {
@@ -274,57 +279,59 @@ public class InstructionSet {
             }
         }
         this.chip8.graphics.drawFlag = true;
-        this.cpu.pc += 2;
+
     }
 
     void SkipNextIfVxPressed() {// EX9E: Skips the next instruction if the key stored in VX is pressed
-        if (this.chip8.keyboard.getKeyPressed(this.cpu.V[(this.cpu.opcode & 0x0F00) >> 8])) {
-            this.cpu.pc += 4;
-        } else {
+        int sourceRegister = (cpu.opcode & 0x0F00) >> 8;
+        int keyToCheck = cpu.V[sourceRegister];
+        if (chip8.keyboard.currentKeyPressed == keyToCheck) {
             this.cpu.pc += 2;
         }
     }
 
     void SkipNextIfVxNotPressed() { // EXA1: Skips the next instruction if the key stored in VX isn't pressed
-        if (!this.chip8.keyboard.getKeyPressed(this.cpu.V[(this.cpu.opcode & 0x0F00) >> 8]))
-            this.cpu.pc += 4;
-        else
+        int sourceRegister = (cpu.opcode & 0x0F00) >> 8;
+        int keyToCheck = cpu.V[sourceRegister];
+        if (chip8.keyboard.currentKeyPressed != keyToCheck) {
             this.cpu.pc += 2;
+        }
+
     }
 
     void SetVxEqualDelayTimer() {
         int Vx = (this.cpu.opcode & 0x0F00) >> 8;
 
         this.cpu.V[Vx] = this.cpu.delay_timer;
-        this.cpu.pc += 2;
+
 
     }
 
     void SetDelayTimerEqualVx() {
         int Vx = (this.cpu.opcode & 0x0F00) >> 8;
         this.cpu.delay_timer = this.cpu.V[Vx];
-        this.cpu.pc += 2;
+
 
     }
 
     void SetSoundTimerEqualVx() {
         int Vx = (this.cpu.opcode & 0x0F00) >> 8;
         this.cpu.sound_timer = this.cpu.V[Vx];
-        this.cpu.pc += 2;
+
 
     }
 
     void SetIAddVx() {
         int Vx = (cpu.opcode & 0x0F00) >> 8;
         this.cpu.I = this.cpu.I + this.cpu.V[Vx];
-        this.cpu.pc += 2;
+
 
     }
 
     void WaitForKeyPress() {
         this.cpu.registerToWriteKey = (short) ((cpu.opcode & 0x0F00) >> 8);
         this.cpu.setIdle(true);
-        this.cpu.pc += 2;
+
 
     }
 
@@ -333,7 +340,7 @@ public class InstructionSet {
         this.chip8.ram.write(this.cpu.V[(cpu.opcode & 0x0F00) >> 8] / 100, this.cpu.I);
         this.chip8.ram.write((this.cpu.V[(cpu.opcode & 0x0F00) >> 8] / 10) % 10, this.cpu.I + 1);
         this.chip8.ram.write((this.cpu.V[(cpu.opcode & 0x0F00) >> 8] % 100) % 10, this.cpu.I + 2);
-        this.cpu.pc += 2;
+
 
     }
 
@@ -342,7 +349,6 @@ public class InstructionSet {
 
         this.cpu.I = this.cpu.V[Vx] * 5;
 
-        this.cpu.pc += 2;
 
     }
 
@@ -352,18 +358,16 @@ public class InstructionSet {
             this.chip8.ram.write(this.cpu.V[i], this.cpu.I + i);
         }
         //I += ((cpu.opcode & 0x0F00) >> 8) + 1;
-        this.cpu.pc += 2;
+
 
     }
 
     void ReadRegistersAtI() {
-        int numRegister = (cpu.opcode & 0x0F00) >> 8;
-        for (int i = 0; i <= numRegister; i++) {
-            this.cpu.V[i] = this.chip8.ram.read(this.cpu.I + i);
-
+        int numRegisters = (cpu.opcode & 0x0F00) >> 8;
+        for (int counter = 0; counter <= numRegisters; counter++) {
+            cpu.V[counter] = chip8.ram.read(cpu.I + counter);
         }
-        this.cpu.I += ((cpu.opcode & 0x0F00) >> 8) + 1;
-        this.cpu.pc += 2;
+
 
     }
 

@@ -5,7 +5,7 @@ package com.bobby.Chip8;
  */
 public class Memory {
 
-    private int[] data;
+    public int[] data;
     private int size;
 
     public Memory(int size) {

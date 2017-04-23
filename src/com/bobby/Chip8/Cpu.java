@@ -21,7 +21,7 @@ public class Cpu {
     public int delay_timer;
     public int sound_timer;
     public short registerToWriteKey;
-    private InstructionSet instructionSet;
+    public InstructionSet instructionSet;
 
 
     public Cpu(Chip8 chip8) {
@@ -48,7 +48,14 @@ public class Cpu {
             return;
         }
         try {
-            this.decodeOpcode(fetchOpcode());
+            opcode = chip8.ram.read(pc);
+            opcode = opcode << 8;
+            opcode += chip8.ram.read(pc + 1);
+            opcode = opcode & 0x0FFFF;
+            pc += 2;
+            //int opc = (opcode & 0x0F000) >> 12;
+            this.decodeOpcode(opcode);
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(0);
@@ -84,6 +91,7 @@ public class Cpu {
                         break;
                     case 0xE:
                         instructionSet.ReturnFromSubroutine();
+                        break;
                 }
                 break;
             }
@@ -138,7 +146,7 @@ public class Cpu {
                         break;
                     }
                     case 0x5: {
-                        instructionSet.setVxSubVy();
+                        instructionSet.SetVxSubVy();
                         break;
                     }
                     case 0x6: {
