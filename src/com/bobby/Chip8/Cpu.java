@@ -76,7 +76,7 @@ public class Cpu {
     }
 
     public String hex(int number) {
-        return "0x" + Integer.toHexString(number);
+        return ("0x" + Integer.toHexString(number)).toUpperCase();
     }
 
     public void decodeOpcode(int opcode) throws InvalidParameterException {

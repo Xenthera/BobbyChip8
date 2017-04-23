@@ -13,7 +13,7 @@ import java.io.InputStream;
 
 
 public class Chip8 {
-    private final int INSTRUCTIONS_PER_FRAME = 10;
+    public int INSTRUCTIONS_PER_FRAME = 10;
     public boolean verbose = false;
     public Cpu cpu;
     public Memory ram;
